@@ -40,7 +40,7 @@
   const me = () => prof(db.session);
   const first = p => p.name.split(' ')[0];
   const matDate = p => fmtDate(Date.now() + p.cd.maturesInDays * DAY);
-  const ui = { tab: 'home', sheet: null, enroll: false, game: null, kw: '', dive: null, rh: null, lad: null, lm: null, tick: null, openKnows: false };
+  const ui = { openQ: null, tab: 'home', sheet: null, enroll: false, game: null, kw: '', dive: null, rh: null, lad: null, lm: null, tick: null, openKnows: false };
   // pick up outreach sent from the desktop console in another tab
   window.addEventListener('storage', e => { if (e.key === STORE) { db = loadDb(); render(true); } });
 
@@ -88,6 +88,21 @@
     ['split', /split|accessible|reserve|keep|how much|plan|checkup|explain/i]
   ];
   const GOALS = [[/repair/i, 'Home repairs'], [/emergency/i, 'Emergency savings'], [/tuition|school|college/i, 'Tuition'], [/\bcar\b/i, 'Car replacement'], [/wedding/i, 'Wedding'], [/travel|trip/i, 'Travel'], [/medical/i, 'Medical costs'], [/income|retire/i, 'Monthly retirement income']];
+  const GOAL_TYPES = ['Emergency savings', 'Home repairs', 'Car replacement', 'Down payment on a home', 'Travel', 'Tuition', 'Wedding', 'Medical costs', 'Monthly retirement income', 'Something else'];
+  const GOAL_TIPS = {
+    'Emergency savings': 'Emergency money should stay accessible. A common target is 3 to 6 months of expenses, kept in savings rather than a CD.',
+    'Home repairs': 'Repairs often cost more than the first quote. Keeping a little extra accessible protects your CD from an early withdrawal.',
+    'Car replacement': 'If you expect to buy within 6 months, keep that amount accessible. A CD that ends after the purchase could cost a penalty.',
+    'Down payment on a home': 'Match your CD term to your expected closing date, or use a ladder so part of it frees up every few months.',
+    'Travel': 'Traveling on a set date? A CD that matures just before you leave can earn more than savings without locking you out.',
+    'Tuition': 'Tuition bills come on a schedule. A ladder can line up CD maturities with each semester.',
+    'Wedding': 'Wedding deposits are due at different times. Keep the next few payments accessible and lock in the rest.',
+    'Medical costs': 'Medical bills are hard to time. Keeping this goal accessible avoids a penalty if a bill arrives early.',
+    'Monthly retirement income': 'A CD ladder can turn savings into steady income, with part of your money maturing every few months.',
+    'Something else': 'Tell MyKey when you will need the money. That is the most important input for your plan.'
+  };
+  const goalSelect = (value, id, label) => '<label class="lbl" for="' + id + '">' + label + '</label><select class="field" id="' + id + '" name="goal">' +
+    GOAL_TYPES.concat(GOAL_TYPES.includes(value) ? [] : [value]).map(g => '<option' + (g === value ? ' selected' : '') + '>' + esc(g) + '</option>').join('') + '</select>';
   const CHIPS = [['split', 'Explain my split'], ['early', 'What if I need it early?'], ['rates', 'What if rates change?'], ['renew', 'What happens at maturity?'], ['why', 'Why am I seeing this?'], ['banker', 'Talk to a banker']];
   const intentOf = t => (INTENTS.find(([, re]) => re.test(t)) || ['fallback'])[0];
   function answer(intent, p, text) {
@@ -123,26 +138,27 @@
   function header() {
     const p = me(), unread = p ? p.inbox.filter(x => !x.read).length : 0;
     return '<header class="top"><button class="brand" data-a="tab" data-v="home" aria-label="Home">KeyBank ' + keySvg + '</button>' +
-      '<div class="row" style="gap:8px">' + (p ? '<button class="bell" data-a="tab" data-v="me" aria-label="Messages, ' + unread + ' unread">🔔' + (unread ? '<span>' + unread + '</span>' : '') + '</button>' : '') +
-      '<button class="proto" data-a="sheet" data-v="about"><i></i>PROTOTYPE · IN MYKEY</button></div></header>';
+      '<div class="row" style="gap:8px">' + (p ? '<button class="bell" data-a="tab" data-v="me" aria-label="Messages, ' + unread + ' unread">🔔' + (unread ? '<span>' + unread + '</span>' : '') + '</button><button class="avatar' + (ui.tab === 'me' && !ui.game ? ' on' : '') + '" data-a="tab" data-v="me" aria-label="Me: profile, messages and privacy">' + esc(p.initials || p.name[0]) + '</button>' : '') +
+      '<button class="proto" data-a="sheet" data-v="about"><i></i>MYKEY PROTOTYPE</button></div></header>';
   }
   const ICON = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7M6 9v11h12V9"/></svg>',
     checkup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     mykey: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/></svg>',
     play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M16 12h.01M18 14h.01"/></svg>',
+    qa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg>',
     me: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>'
   };
   function tabbar() {
     const playNew = !Object.keys(GAMES).some(k => (gday()[k] || {}).done);
-    return '<nav class="tabbar" style="grid-template-columns:repeat(5,1fr)" aria-label="App">' + [['home', 'Home'], ['checkup', 'Checkup'], ['mykey', 'MyKey'], ['play', 'Learn'], ['me', 'Me']].map(([k, l]) =>
+    return '<nav class="tabbar" style="grid-template-columns:repeat(5,1fr)" aria-label="App">' + [['home', 'Home'], ['checkup', 'Checkup'], ['mykey', 'MyKey'], ['qa', 'Q&A'], ['play', 'Learn']].map(([k, l]) =>
       '<button class="' + (ui.tab === k && !ui.game ? 'on' : '') + '" data-a="tab" data-v="' + k + '"' + (ui.tab === k ? ' aria-current="page"' : '') + '>' + ICON[k] + l + (k === 'play' && playNew ? '<span class="dot"></span>' : '') + '</button>').join('') + '</nav>';
   }
 
   /* ================= sign on ================= */
   function signOn() {
     if (ui.enroll) return '<div class="main" id="main"><button class="back" data-a="enroll" data-v="0" aria-label="Back">←</button><h1 class="hi" style="margin-top:10px">Create a login</h1><p class="muted small">Make your own demo account with fictional numbers. It also appears in the desktop banker console.</p>' +
-      '<form data-f="enroll" class="card">' + fld('Full name', 'name', '', 'text', 'required') + fld('User ID', 'userId', '', 'text', 'required') + fld('Savings goal', 'goal', 'Emergency savings') +
+      '<form data-f="enroll" class="card">' + fld('Full name', 'name', '', 'text', 'required') + fld('User ID', 'userId', '', 'text', 'required') + goalSelect('Emergency savings', 'f-goal', 'Type of savings goal') +
       fld('Goal amount ($)', 'goalAmount', 4000, 'number', 'min="0" step="100" inputmode="numeric"') + fld('CD balance ($)', 'cdAmount', 10000, 'number', 'min="500" step="100" inputmode="numeric"') + fld('CD matures in (days)', 'days', 14, 'number', 'min="0" max="365" inputmode="numeric"') +
       '<label class="row small" style="margin:14px 0"><input type="checkbox" name="personalized" checked> Allow personalized MyKey outreach</label><button class="btn">Create login and sign on</button></form></div>';
     return '<div class="main" id="main"><div class="card red" style="margin-top:4px"><div class="kicker">New in MyKey</div><h2 style="margin:4px 0 6px">Your CD is maturing. Let\'s plan what\'s next.</h2><p class="small" style="margin:0">Sign on to try the MyKey Savings Checkup.</p></div>' +
@@ -177,7 +193,7 @@
   function checkup() {
     const p = me(), w = work(p);
     return '<div class="main" id="main"><div class="kicker">MyKey Savings Checkup</div><h1 class="hi">What\'s next for your ' + m(p.cd.amount) + '?</h1><p class="muted small">CD ••' + p.cd.number + ' matures ' + matDate(p) + '. Goal: ' + esc(p.goal) + (p.goalConfirmed ? ' ✓' : '') + '</p>' +
-      '<div class="card"><h3>1. Keep what you need accessible</h3><p class="small muted" style="margin:6px 0">When might you need it?</p><div class="seg" role="group" aria-label="When">' + [3, 6, 12].map(n => '<button class="' + (w.months == n ? 'on' : '') + '" data-a="months" data-v="' + n + '">' + (n === 3 ? 'Within 3 mo' : 'In ' + n + ' mo') + '</button>').join('') + '</div>' +
+      '<div class="card"><h3>1. Keep what you need accessible</h3>' + goalSelect(p.goal, 'ck-goal', 'What are you saving for?').replace('name="goal"', 'data-goalsel="1"') + '<p class="small muted" style="margin:12px 0 6px">When might you need it?</p><div class="seg" role="group" aria-label="When">' + [3, 6, 12].map(n => '<button class="' + (w.months == n ? 'on' : '') + '" data-a="months" data-v="' + n + '">' + (n === 3 ? 'Within 3 mo' : 'In ' + n + ' mo') + '</button>').join('') + '</div>' +
       '<label class="lbl" for="r-reserve">Keep accessible<output data-out="res">' + m(w.reserve) + '</output></label><input id="r-reserve" type="range" min="0" max="' + p.cd.amount + '" step="250" value="' + w.reserve + '" data-live="reserve"><div class="rl"><span>$0</span><span>Goal ' + m(p.goalAmount) + '</span><span>' + m(p.cd.amount) + '</span></div>' +
       '<div data-out="figs">' + ckFigs(p) + '</div></div>' +
       '<div class="card"><h3>2. Choose what to do with the rest</h3><p class="note" style="margin:0">Estimated interest per year. Illustrative rates, not KeyBank offers.</p><div class="opts" data-out="opts">' + ckOpts(p) + '</div></div>' +
@@ -224,6 +240,45 @@
       '<form class="ask" data-f="ask"><label class="sr" for="q">Message MyKey</label><input id="q" name="q" autocomplete="off" placeholder="Ask about your CD, or tell me your goal"><button aria-label="Send">↑</button></form>';
   }
 
+
+  /* ================= Q&A with personalized recommendations ================= */
+  function recs(p) {
+    const w = work(p), out = [];
+    if (!p.plan) out.push({ t: 'Decide before ' + matDate(p), b: 'Your ' + m(p.cd.amount) + ' CD matures in ' + p.cd.maturesInDays + ' days. A few minutes in the Checkup lets you choose before it renews.', cta: ['tab', 'checkup', 'Start my Checkup'] });
+    else out.push({ t: 'Your plan is saved', b: m(p.plan.reserve) + ' stays accessible and the rest goes to: ' + p.plan.label + '. You can change it until ' + matDate(p) + '.', cta: ['tab', 'checkup', 'Review my plan'] });
+    if (w.reserve < p.goalAmount) out.push({ t: 'Your reserve is short of your goal', b: 'You are keeping ' + m(w.reserve) + ' accessible, ' + m(p.goalAmount - w.reserve) + ' less than your ' + m(p.goalAmount) + ' ' + p.goal.toLowerCase() + ' goal. Raising it helps you avoid an early-withdrawal penalty.', cta: ['tab', 'checkup', 'Adjust my reserve'] });
+    else out.push({ t: 'Your goal is covered', b: 'Your ' + m(w.reserve) + ' reserve covers your ' + m(p.goalAmount) + ' ' + p.goal.toLowerCase() + ' goal. The rest can earn more in a term product.', cta: ['tab', 'checkup', 'See my options'] });
+    out.push({ t: 'Tip for ' + p.goal.toLowerCase(), b: GOAL_TIPS[p.goal] || GOAL_TIPS['Something else'], cta: ['tab', 'me', 'Change my goal'] });
+    if (p.cd.amount >= 25000) out.push({ t: 'Consider a CD ladder', b: 'With ' + m(p.cd.amount) + ', a ladder spreads out maturity dates so your money is never locked up all at once.', cta: ['game', 'ladder', 'Try Ladder Up'] });
+    else out.push({ t: 'Seen a higher rate elsewhere?', b: 'Compare it in dollars on the amount you would lock in. A banker can review your rate before you decide.', cta: ['sheet', 'banker', 'Ask for a rate review'] });
+    const g = recGame();
+    out.push({ t: 'Today\'s 2-minute lesson', b: GAMES[g].name + ' teaches ' + GAMES[g].learn + '.', cta: ['game', g, 'Play ' + GAMES[g].name] });
+    return out.slice(0, 4);
+  }
+  const FAQ = [
+    ['What happens when my CD matures?', p => answer('renew', p).text],
+    ['What if I need my money early?', p => answer('early', p).text],
+    ['What if interest rates change?', p => answer('rates', p).text],
+    ['What is a CD ladder?', p => answer('ladder', p).text],
+    ['Is my money FDIC-insured?', () => 'Yes. KeyBank deposits are FDIC-insured up to $250,000 per depositor, per ownership category.'],
+    ['How does MyKey use my data?', p => answer('why', p).text],
+    ['How do I talk to a banker?', p => answer('banker', p).text],
+    ['Will MyKey ever ask for my password?', p => answer('scam', p).text],
+    ['Is this a real KeyBank product?', () => 'No. This is a student case competition prototype with fictional customers and illustrative rates.']
+  ];
+  function qaScreen() {
+    const p = me(), personal = p.prefs.personalized;
+    const recCard = r => '<div class="card rec"><h3>' + esc(r.t) + '</h3><p class="small" style="margin:4px 0 10px">' + esc(r.b) + '</p>' +
+      '<button class="btn sm" data-a="' + r.cta[0] + '" data-v="' + r.cta[1] + '">' + esc(r.cta[2]) + '</button></div>';
+    return '<div class="main" id="main"><h1 class="hi">Questions & answers</h1><p class="muted small">' + (personal ? 'Picked for you, ' + esc(first(p)) + ', based on your goal and your CD.' : 'Personal recommendations are off.') + '</p>' +
+      (personal ? '<h3 style="margin-top:14px">Recommended for you</h3>' + recs(p).map(recCard).join('')
+        : '<div class="card"><p class="small" style="margin:0 0 10px">Turn on personalized MyKey outreach in Me to see recommendations based on your goal and CD.</p><button class="btn sm ghost" data-a="tab" data-v="me">Open settings</button></div>') +
+      '<h3 style="margin-top:18px">Common questions</h3><div class="card faq">' + FAQ.map(([q, a], i) =>
+        '<button class="faq-q" data-a="faq" data-v="' + i + '" aria-expanded="' + (ui.openQ === i) + '"><span>' + q + '</span><span aria-hidden="true">' + (ui.openQ === i ? '−' : '+') + '</span></button>' +
+        (ui.openQ === i ? '<p class="faq-a">' + esc(a(p)) + (i === 6 ? '<br><button class="btn sm ghost" style="margin-top:8px" data-a="sheet" data-v="banker">Request a banker</button>' : '') + '</p>' : '')).join('') + '</div>' +
+      '<button class="btn ghost" data-a="tab" data-v="mykey">Still have a question? Ask MyKey</button></div>';
+  }
+
   /* ================= me: messages + privacy ================= */
   function meScreen() {
     const p = me(), pr = p.prefs, inbox = p.inbox.slice().sort((a, b) => b.at - a.at);
@@ -236,7 +291,7 @@
       sw('app', 'In-app messages', 'Messages land in this inbox.') + sw('email', 'Email', 'Send a copy by email.') + sw('sms', 'Text message', 'Short reminders only, never sign-in links.') +
       '<p class="small" style="font-weight:700;margin:12px 0 6px">Remind me before my CD matures</p><div class="seg">' + [30, 14, 7].map(d => '<button class="' + (pr.leadDays == d ? 'on' : '') + '" data-a="lead" data-v="' + d + '">' + d + ' days</button>').join('') + '</div>' +
       '<p class="small" style="font-weight:700;margin:12px 0 6px">How MyKey explains things</p><div class="seg"><button class="' + (pr.detail === 'plain' ? 'on' : '') + '" data-a="detail" data-v="plain">Short</button><button class="' + (pr.detail === 'detailed' ? 'on' : '') + '" data-a="detail" data-v="detailed">With numbers</button></div></div>' +
-      '<form class="card" data-f="goal"><h3>Your savings goal</h3><p class="note" style="margin-top:0">Bankers only see a goal you confirmed.</p>' + fld('Goal', 'goal', p.goal) + fld('Amount ($)', 'goalAmount', p.goalAmount, 'number', 'min="0" step="100" inputmode="numeric"') + '<button class="btn" style="margin-top:12px">' + (p.goalConfirmed ? 'Update goal' : 'Confirm goal') + '</button></form>' +
+      '<form class="card" data-f="goal"><h3>Your savings goal</h3><p class="note" style="margin-top:0">Bankers only see a goal you confirmed.</p>' + goalSelect(p.goal, 'f-goal', 'Type of savings goal') + fld('Amount ($)', 'goalAmount', p.goalAmount, 'number', 'min="0" step="100" inputmode="numeric"') + '<button class="btn" style="margin-top:12px">' + (p.goalConfirmed ? 'Update goal' : 'Confirm goal') + '</button></form>' +
       '<div class="card"><button class="between linkish" style="width:100%;text-decoration:none" data-a="knows"><h3 style="margin:0">What MyKey knows about you</h3><span>' + (ui.openKnows ? '−' : '+') + '</span></button>' +
       (ui.openKnows ? '<pre class="json">' + esc(JSON.stringify({ name: p.name, goal: p.goal, goalConfirmed: p.goalConfirmed, cd: p.cd, preferences: p.prefs, savedPlan: p.plan, activityUsed: p.prefs.insights ? recentTransfers(p).length + ' recent transfers' : 'none' }, null, 2)) + '</pre><button class="btn sm ghost" data-a="clearchat">Delete my MyKey chat history</button>' : '') + '</div>' +
       '<div class="card"><h3>About this prototype</h3><p class="small">The MyKey Savings Checkup as it could live inside the KeyBank app. Built for a student case competition. Scripted answers, fictional customers, illustrative rates.</p><a class="btn sm ghost" href="../index.html">Open desktop prototype + banker console</a></div>' +
@@ -358,7 +413,7 @@
     else {
       const d = ui.dive, q = QS[d.qs[d.i]];
       right = '<div class="between small"><b>Q' + (d.i + 1) + ' of 7</b><span id="tsec">' + d.left + 's</span></div><div class="timer"><i id="tbar" style="width:' + (d.left / 20 * 100) + '%"></i></div><p style="font-weight:700;font-size:15px">' + q[0] + '</p>' +
-        q[1].map((o, i) => '<button class="qopt' + (d.picked !== null ? (i === q[2] ? ' right' : i === d.picked ? ' wrong' : '') : '') + '" data-a="divepick" data-v="' + i + '"' + (d.picked !== null ? ' disabled' : '') + '>' + o + '</button>').join('') +
+        (d.orders ? d.orders[d.i] : [0, 1, 2, 3]).map(i => '<button class="qopt' + (d.picked !== null ? (i === q[2] ? ' right' : i === d.picked ? ' wrong' : '') : '') + '" data-a="divepick" data-v="' + i + '"' + (d.picked !== null ? ' disabled' : '') + '>' + q[1][i] + '</button>').join('') +
         (d.picked !== null ? '<p class="small">' + (d.picked === -1 ? '⏱ Time\'s up. ' : d.picked === q[2] ? '✅ ' : '❌ ') + q[3] + '</p><button class="btn sm" data-a="divenext">' + (d.i < 6 ? 'Next' : 'Surface') + '</button>' : '');
     }
     const learned = done ? takeaways('dive', (done.review && done.review.length ? done.review.slice(0, 3).map(i => QS[i][3]) : ['You know your savings basics. Put them to work.', 'Keep what you might need accessible; lock in the rest.'])) : '';
@@ -427,7 +482,7 @@
     let body;
     if (!p) body = signOn();
     else if (ui.game) body = ({ keyword, dive, rate, ladder, lean })[ui.game]();
-    else body = ({ home, checkup, mykey: chat, play: learnHub, me: meScreen })[ui.tab]();
+    else body = ({ home, checkup, mykey: chat, qa: qaScreen, play: learnHub, me: meScreen })[ui.tab]();
     app.innerHTML = header() + body + (p ? tabbar() : '') + sheet();
     const main = $('main');
     if (main) main.scrollTop = keepScroll === 'bottom' ? main.scrollHeight : y;
@@ -478,6 +533,7 @@
     read: v => { me().inbox.find(i => i.id === v).read = true; save(); render(true); },
     lead: v => { const p = me(); p.prefs.leadDays = Number(v); log(p.name, 'Set reminder to ' + v + ' days'); save(); render(true); },
     detail: v => { const p = me(); p.prefs.detail = v; log(p.name, 'Set explanation style to ' + v); save(); render(true); },
+    faq: v => { ui.openQ = ui.openQ === Number(v) ? null : Number(v); render(true); },
     knows: () => { ui.openKnows = !ui.openKnows; render(true); },
     clearchat: () => { const p = me(); p.chat = []; log(p.name, 'Deleted MyKey chat history'); save(); render(true); toast('Chat history deleted'); },
     reset: () => { if (!confirm('Reset all demo data, including the desktop prototype?')) return; stopTick(); db = clone(SEED); G = { days: {}, streak: { last: null, count: 0 }, badges: {} }; ui.game = null; save(); render(); },
@@ -486,7 +542,7 @@
     exitgame: () => { stopTick(); ui.game = null; ui.tab = 'play'; render(); },
     tieplan: () => { stopTick(); ui.game = null; ui.tab = 'checkup'; render(); },
     kw: v => kwKey(v),
-    divego: () => { ui.dive = { qs: shuffle(QS.map((q, i) => i), DAYNUM).slice(0, 7), i: 0, score: 0, left: 20, picked: null, correct: 0, missed: [] }; startTick(); render(true); },
+    divego: () => { ui.dive = { qs: shuffle(QS.map((q, i) => i), DAYNUM).slice(0, 7), orders: Array.from({ length: 7 }, () => shuffle([0, 1, 2, 3], Math.floor(Math.random() * 1e9))), i: 0, score: 0, left: 20, picked: null, correct: 0, missed: [] }; startTick(); render(true); },
     divepick: v => { const d = ui.dive; if (d.picked !== null) return; d.picked = Number(v); if (d.picked === QS[d.qs[d.i]][2]) { d.score += 50 + Math.round(d.left * 2.5); d.correct++; } else d.missed.push(d.qs[d.i]); render(true); },
     divenext: () => {
       const d = ui.dive;
@@ -546,6 +602,7 @@
   document.addEventListener('input', e => { const t = e.target, p = me(); if (t.dataset.live && p) { work(p)[t.dataset.live] = Number(t.value); save(); refreshCheckup(); } });
   document.addEventListener('change', e => {
     const t = e.target, p = me();
+    if (t.dataset.goalsel && p) { p.goal = t.value; p.goalConfirmed = true; log(p.name, 'Set savings goal to ' + t.value); save(); render(true); toast('Goal updated'); return; }
     if (t.dataset.live && p) log(p.name, 'Adjusted Checkup ' + t.dataset.live + ' to ' + m(t.value));
     if (t.dataset.pref && p) { p.prefs[t.dataset.pref] = t.checked; log(p.name, 'Turned ' + (t.checked ? 'on' : 'off') + ' ' + t.dataset.pref + ' preference'); save(); toast('Saved'); }
   });
