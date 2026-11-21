@@ -8,21 +8,25 @@ Student prototype for the 2026 KeyBank Symposium case competition. It imagines t
 
 | | URL | For |
 |---|---|---|
-| **Prototype 2: mobile, inside MyKey** | `/mobile/` | Judges scanning a QR code on their phones |
+| **Prototype 2: mobile app inside MyKey** | `/mobile/` | Judges scanning a QR code on their phones |
 | Prototype 1: desktop + banker console | `/` | Walkthrough on the projector, banker-side story |
 | QR code page | `/qr.html` | Put on a slide or print it |
 
 ### Prototype 2 (mobile)
 
-Pick one of three customers, each with a different problem the product answers:
+Prototype 1's customer side rebuilt as a phone app inside MyKey: sign on, **Home** (accounts, CD alert, today's lesson), **Checkup** (reserve slider, options, stress test, lock in, banker request), **MyKey** chat, **Learn** (games), and **Me** (inbox, privacy, goal, what MyKey knows).
 
-| Customer | Problem | In the product | Their game |
-|---|---|---|---|
-| Jordan, young professional | Tempted by a digital bank's higher rate | Rate Reality Check (gap in dollars) + Goal Jars with auto-save, round-ups and a boost rate | Rate or Hype? |
-| Michael, established saver | CD maturing, competitors sending offers | Savings Checkup + "Got an offer?" comparison that routes to a banker rate review | Ladder Up |
-| Sam, variable income | Uneven income makes saving hard | Steady Pay (same paycheck, cushion absorbs swings) + Percent Saver with Lean-month mode | Lean Month |
+It shares browser storage with prototype 1, so on the same browser the desktop banker console sees plans, flagged answers and banker requests made on mobile, and outreach sent from the console lands in the mobile inbox.
 
-Everyone also gets two dailies: **Keyword** (a 5-letter money word in 6 tries) and **Deep Save** (7 timed questions; faster right answers dive deeper). Streaks, badges, share results, and each game ends with one tap into the customer's plan.
+**Learn: educational 2-minute games.** They are designed around real saver situations (comparing rates, a maturing CD, uneven income) without sorting customers into types. Each one opens with a "Learn first" card, explains every answer, ends with "What you learned" takeaways, and links into the Checkup.
+
+| Game | Teaches |
+|---|---|
+| Keyword | A daily 5-letter banking word, with its definition and how it shows up in your accounts |
+| Deep Save | Savings basics in 7 timed questions; missed ones are reviewed at the end |
+| Rate or Hype? | Turning offers into dollars: teaser rates, caps, bonus minimums |
+| Ladder Up | Matching CD terms to when you need cash, and what penalties cost |
+| Lean Month | Why an accessible reserve and percent-based saving prevent overdrafts |
 
 ## Demo script (prototype 1)
 

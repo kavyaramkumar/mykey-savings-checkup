@@ -211,3 +211,19 @@ label.lbl output{color:var(--red-d)}
 .toast{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:20px;font-size:13px;z-index:30;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
 .pop{animation:pop .3s}
 @keyframes pop{50%{transform:scale(1.06)}}
+
+/* prototype-1 app screens */
+.bell{position:relative;border:0;background:var(--bg);border-radius:50%;width:34px;height:34px;font-size:15px;flex:none}
+.bell span{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.acct{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.acct:first-of-type{border-top:0}
+.acct small{display:block;color:var(--muted);font-size:12px}
+.field{width:100%;border:1px solid #c9c4c1;border-radius:12px;padding:12px;font-size:16px;background:#fff;margin-top:6px}
+.linkish{background:none;border:0;padding:0;color:var(--red-d);font-weight:700;font-size:12px;text-decoration:underline}
+.inbox{padding:12px 0;border-top:1px solid var(--line)}
+.inbox:first-of-type{border-top:0}
+.inbox.unread{border-left:4px solid var(--red);padding-left:10px}
+.msgprev{display:block;width:100%;text-align:left;border:0;font-size:14px}
+pre.json{background:#1d1f22;color:#eee;border-radius:12px;padding:12px;font-size:11px;overflow:auto;max-height:240px;margin:12px 0}
+.tabbar button{font-size:10.5px}
+.persona .av{font-size:16px;font-weight:800;color:var(--red-d)}
