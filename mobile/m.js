@@ -7,6 +7,11 @@
   /* ================= helpers ================= */
   const STORE = 'mykey-checkup-demo';      // same key as prototype 1
   const GKEY = 'mykey-mobile-games';       // games, streaks and badges (per device)
+  // Open with ?reset to wipe this device's demo data and start fresh (handy before a screen recording).
+  if (/[?&]reset\b/.test(location.search)) {
+    try { localStorage.removeItem(STORE); localStorage.removeItem(GKEY); sessionStorage.clear(); } catch (e) { /* ignore */ }
+    history.replaceState(null, '', location.pathname);
+  }
   const DAY = 864e5;
   const $ = id => document.getElementById(id);
   const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
