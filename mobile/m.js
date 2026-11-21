@@ -138,8 +138,8 @@
   function header() {
     const p = me(), unread = p ? p.inbox.filter(x => !x.read).length : 0;
     return '<header class="top"><button class="brand" data-a="tab" data-v="home" aria-label="Home">KeyBank ' + keySvg + '</button>' +
-      '<div class="row" style="gap:8px">' + (p ? '<button class="bell" data-a="tab" data-v="me" aria-label="Messages, ' + unread + ' unread">🔔' + (unread ? '<span>' + unread + '</span>' : '') + '</button><button class="avatar' + (ui.tab === 'me' && !ui.game ? ' on' : '') + '" data-a="tab" data-v="me" aria-label="Me: profile, messages and privacy">' + esc(p.initials || p.name[0]) + '</button>' : '') +
-      '<button class="proto" data-a="sheet" data-v="about"><i></i>MYKEY PROTOTYPE</button></div></header>';
+      '<div class="row" style="gap:8px">' + (p ? '<button class="bell" data-a="tab" data-v="me" aria-label="Messages, ' + unread + ' unread">🔔' + (unread ? '<span>' + unread + '</span>' : '') + '</button>' : '') +
+      '<button class="proto" data-a="sheet" data-v="about"><i></i>PROTOTYPE · IN MYKEY</button></div></header>';
   }
   const ICON = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7M6 9v11h12V9"/></svg>',
@@ -151,7 +151,7 @@
   };
   function tabbar() {
     const playNew = !Object.keys(GAMES).some(k => (gday()[k] || {}).done);
-    return '<nav class="tabbar" style="grid-template-columns:repeat(5,1fr)" aria-label="App">' + [['home', 'Home'], ['checkup', 'Checkup'], ['mykey', 'MyKey'], ['qa', 'Q&A'], ['play', 'Learn']].map(([k, l]) =>
+    return '<nav class="tabbar" style="grid-template-columns:repeat(5,1fr)" aria-label="App">' + [['home', 'Home'], ['checkup', 'Checkup'], ['mykey', 'MyKey'], ['play', 'Learn'], ['me', 'Me']].map(([k, l]) =>
       '<button class="' + (ui.tab === k && !ui.game ? 'on' : '') + '" data-a="tab" data-v="' + k + '"' + (ui.tab === k ? ' aria-current="page"' : '') + '>' + ICON[k] + l + (k === 'play' && playNew ? '<span class="dot"></span>' : '') + '</button>').join('') + '</nav>';
   }
 
@@ -201,7 +201,7 @@
       '<div class="card" data-out="sum">' + ckSummary(p) + '</div>' +
       '<button class="btn dark" data-a="sheet" data-v="banker">Talk it through with a banker</button>' +
       (db.appointments.filter(a => a.profileId === p.id).map(a => '<p class="note">Banker request ' + esc(a.status.toLowerCase()) + ': ' + esc(a.method) + ', ' + esc(a.slot) + '</p>').join('')) +
-      '<p class="note" style="text-align:center"><a href="https://www.key.com/personal/cd/certificate-of-deposit.html" target="_blank" rel="noopener">Official KeyBank CD information ↗</a></p></div>';
+      '<p class="note" style="text-align:center"><a href="https://www.key.com/personal/cd/certificate-of-deposit.html" target="_blank" rel="noopener">Official KeyBank CD information ↗</a></p>' + qaSection(p) + '</div>';
   }
   function ckFigs(p) {
     const w = work(p), rest = p.cd.amount - w.reserve, share = p.cd.amount ? w.reserve / p.cd.amount * 100 : 0;
@@ -248,7 +248,7 @@
     else out.push({ t: 'Your plan is saved', b: m(p.plan.reserve) + ' stays accessible and the rest goes to: ' + p.plan.label + '. You can change it until ' + matDate(p) + '.', cta: ['tab', 'checkup', 'Review my plan'] });
     if (w.reserve < p.goalAmount) out.push({ t: 'Your reserve is short of your goal', b: 'You are keeping ' + m(w.reserve) + ' accessible, ' + m(p.goalAmount - w.reserve) + ' less than your ' + m(p.goalAmount) + ' ' + p.goal.toLowerCase() + ' goal. Raising it helps you avoid an early-withdrawal penalty.', cta: ['tab', 'checkup', 'Adjust my reserve'] });
     else out.push({ t: 'Your goal is covered', b: 'Your ' + m(w.reserve) + ' reserve covers your ' + m(p.goalAmount) + ' ' + p.goal.toLowerCase() + ' goal. The rest can earn more in a term product.', cta: ['tab', 'checkup', 'See my options'] });
-    out.push({ t: 'Tip for ' + p.goal.toLowerCase(), b: GOAL_TIPS[p.goal] || GOAL_TIPS['Something else'], cta: ['tab', 'me', 'Change my goal'] });
+    out.push({ t: 'Tip for ' + p.goal.toLowerCase(), b: GOAL_TIPS[p.goal] || GOAL_TIPS['Something else'], cta: ['tab', 'checkup', 'Change my goal'] });
     if (p.cd.amount >= 25000) out.push({ t: 'Consider a CD ladder', b: 'With ' + m(p.cd.amount) + ', a ladder spreads out maturity dates so your money is never locked up all at once.', cta: ['game', 'ladder', 'Try Ladder Up'] });
     else out.push({ t: 'Seen a higher rate elsewhere?', b: 'Compare it in dollars on the amount you would lock in. A banker can review your rate before you decide.', cta: ['sheet', 'banker', 'Ask for a rate review'] });
     const g = recGame();
@@ -266,11 +266,11 @@
     ['Will MyKey ever ask for my password?', p => answer('scam', p).text],
     ['Is this a real KeyBank product?', () => 'No. This is a student case competition prototype with fictional customers and illustrative rates.']
   ];
-  function qaScreen() {
-    const p = me(), personal = p.prefs.personalized;
+  function qaSection(p) {
+    const personal = p.prefs.personalized;
     const recCard = r => '<div class="card rec"><h3>' + esc(r.t) + '</h3><p class="small" style="margin:4px 0 10px">' + esc(r.b) + '</p>' +
-      '<button class="btn sm" data-a="' + r.cta[0] + '" data-v="' + r.cta[1] + '">' + esc(r.cta[2]) + '</button></div>';
-    return '<div class="main" id="main"><h1 class="hi">Questions & answers</h1><p class="muted small">' + (personal ? 'Picked for you, ' + esc(first(p)) + ', based on your goal and your CD.' : 'Personal recommendations are off.') + '</p>' +
+      (r.cta[0] === 'tab' && r.cta[1] === 'checkup' ? '<button class="btn sm" data-a="totop">' + esc(r.cta[2]) + '</button>' : '<button class="btn sm" data-a="' + r.cta[0] + '" data-v="' + r.cta[1] + '">' + esc(r.cta[2]) + '</button>') + '</div>';
+    return '<div class="qa-section" id="qa"><h2>Questions & answers</h2><p class="muted small">' + (personal ? 'Picked for you, ' + esc(first(p)) + ', based on your goal and your CD.' : 'Personal recommendations are off.') + '</p>' +
       (personal ? '<h3 style="margin-top:14px">Recommended for you</h3>' + recs(p).map(recCard).join('')
         : '<div class="card"><p class="small" style="margin:0 0 10px">Turn on personalized MyKey outreach in Me to see recommendations based on your goal and CD.</p><button class="btn sm ghost" data-a="tab" data-v="me">Open settings</button></div>') +
       '<h3 style="margin-top:18px">Common questions</h3><div class="card faq">' + FAQ.map(([q, a], i) =>
@@ -482,7 +482,7 @@
     let body;
     if (!p) body = signOn();
     else if (ui.game) body = ({ keyword, dive, rate, ladder, lean })[ui.game]();
-    else body = ({ home, checkup, mykey: chat, qa: qaScreen, play: learnHub, me: meScreen })[ui.tab]();
+    else body = ({ home, checkup, mykey: chat, play: learnHub, me: meScreen })[ui.tab]();
     app.innerHTML = header() + body + (p ? tabbar() : '') + sheet();
     const main = $('main');
     if (main) main.scrollTop = keepScroll === 'bottom' ? main.scrollHeight : y;
@@ -533,6 +533,7 @@
     read: v => { me().inbox.find(i => i.id === v).read = true; save(); render(true); },
     lead: v => { const p = me(); p.prefs.leadDays = Number(v); log(p.name, 'Set reminder to ' + v + ' days'); save(); render(true); },
     detail: v => { const p = me(); p.prefs.detail = v; log(p.name, 'Set explanation style to ' + v); save(); render(true); },
+    totop: () => { const mn = $('main'); if (mn) mn.scrollTop = 0; },
     faq: v => { ui.openQ = ui.openQ === Number(v) ? null : Number(v); render(true); },
     knows: () => { ui.openKnows = !ui.openKnows; render(true); },
     clearchat: () => { const p = me(); p.chat = []; log(p.name, 'Deleted MyKey chat history'); save(); render(true); toast('Chat history deleted'); },

@@ -238,3 +238,6 @@ pre.json{background:#1d1f22;color:#eee;border-radius:12px;padding:12px;font-size
 .faq-a{font-size:14px;color:var(--muted);margin:0 0 14px}
 select.field{appearance:auto}
 @media (max-width:380px){.proto{font-size:10px;padding:5px 8px}}
+
+.qa-section{margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}
+.qa-section h2{margin:0 0 4px}
