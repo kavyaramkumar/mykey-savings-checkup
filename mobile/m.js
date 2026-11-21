@@ -141,16 +141,17 @@
 
   /* ================= sign on ================= */
   function signOn() {
-    if (ui.enroll) return '<div class="main" id="main"><button class="back" data-a="enroll" data-v="0" aria-label="Back">←</button><h1 class="hi" style="margin-top:10px">Enroll</h1><p class="muted small">Create a fictional demo profile. It also appears in the desktop banker console.</p>' +
+    if (ui.enroll) return '<div class="main" id="main"><button class="back" data-a="enroll" data-v="0" aria-label="Back">←</button><h1 class="hi" style="margin-top:10px">Create a login</h1><p class="muted small">Make your own demo account with fictional numbers. It also appears in the desktop banker console.</p>' +
       '<form data-f="enroll" class="card">' + fld('Full name', 'name', '', 'text', 'required') + fld('User ID', 'userId', '', 'text', 'required') + fld('Savings goal', 'goal', 'Emergency savings') +
       fld('Goal amount ($)', 'goalAmount', 4000, 'number', 'min="0" step="100" inputmode="numeric"') + fld('CD balance ($)', 'cdAmount', 10000, 'number', 'min="500" step="100" inputmode="numeric"') + fld('CD matures in (days)', 'days', 14, 'number', 'min="0" max="365" inputmode="numeric"') +
-      '<label class="row small" style="margin:14px 0"><input type="checkbox" name="personalized" checked> Allow personalized MyKey outreach</label><button class="btn">Create and sign on</button></form></div>';
+      '<label class="row small" style="margin:14px 0"><input type="checkbox" name="personalized" checked> Allow personalized MyKey outreach</label><button class="btn">Create login and sign on</button></form></div>';
     return '<div class="main" id="main"><div class="card red" style="margin-top:4px"><div class="kicker">New in MyKey</div><h2 style="margin:4px 0 6px">Your CD is maturing. Let\'s plan what\'s next.</h2><p class="small" style="margin:0">Sign on to try the MyKey Savings Checkup.</p></div>' +
       '<form data-f="signon" class="card"><h2>Sign On</h2><p class="note" style="margin-top:0">Demo sign-on. This prototype never asks for a password.</p>' +
       '<label class="lbl" for="uid">User ID</label><input class="field" id="uid" name="uid" list="uids" autocomplete="off" autocapitalize="none" placeholder="e.g. michael.demo"><datalist id="uids">' + db.profiles.map(p => '<option value="' + esc(p.userId) + '">').join('') + '</datalist>' +
       '<button class="btn" style="margin-top:12px">Sign On</button></form>' +
-      '<h3>Demo profiles</h3>' + db.profiles.map(p => '<button class="persona" data-a="signin" data-v="' + p.id + '"><span class="av">' + esc(p.initials || p.name[0]) + '</span><span><b>' + esc(p.name) + '</b><small>' + esc(p.segment) + ' · ' + m(p.cd.amount) + ' CD in ' + p.cd.maturesInDays + ' days</small></span></button>').join('') +
-      '<button class="btn ghost" data-a="enroll" data-v="1">Enroll a new demo profile</button><p class="note" style="text-align:center">Case competition prototype. Fictional data. Not operated by or affiliated with KeyBank.</p></div>';
+      '<button class="btn ghost" data-a="enroll" data-v="1">Create a login</button>' +
+      '<h3 style="margin-top:18px">Or use a demo account</h3>' + db.profiles.map(p => '<button class="persona" data-a="signin" data-v="' + p.id + '"><span class="av">' + esc(p.initials || p.name[0]) + '</span><span><b>' + esc(p.name) + '</b><small>User ID: ' + esc(p.userId) + '</small></span></button>').join('') +
+      '<p class="note" style="text-align:center">Case competition prototype. Fictional data. Not operated by or affiliated with KeyBank.</p></div>';
   }
   function fld(label, name, value, type, extra) { return '<label class="lbl" for="f-' + name + '">' + label + '</label><input class="field" id="f-' + name + '" name="' + name + '" type="' + (type || 'text') + '" value="' + esc(value) + '" ' + (extra || '') + '>'; }
 
@@ -227,7 +228,7 @@
   function meScreen() {
     const p = me(), pr = p.prefs, inbox = p.inbox.slice().sort((a, b) => b.at - a.at);
     const sw = (k, t, d) => '<div class="toggle"><div><b class="small">' + t + '</b><p>' + d + '</p></div><span class="sw"><input type="checkbox" data-pref="' + k + '"' + (pr[k] ? ' checked' : '') + ' aria-label="' + t + '"><span></span></span></div>';
-    return '<div class="main" id="main"><div class="kicker">Me</div><h1 class="hi">' + esc(p.name) + '</h1><p class="muted small">' + esc(p.segment) + '</p>' +
+    return '<div class="main" id="main"><div class="kicker">Me</div><h1 class="hi">' + esc(p.name) + '</h1><p class="muted small">User ID: ' + esc(p.userId) + '</p>' +
       '<div class="card"><h3>Messages</h3>' + (inbox.length ? inbox.map(x => '<div class="inbox' + (x.read ? '' : ' unread') + '"><div class="between small muted"><span>' + esc(x.from) + '</span><span>' + fmtTime(x.at) + '</span></div><b>' + esc(x.subject) + '</b><p class="small" style="margin:4px 0 8px">' + esc(x.body) + '</p>' +
         (x.kind === 'outreach' ? (x.response ? '<span class="chip ok">You responded: ' + esc(x.response) + '</span>' : '<div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn sm" data-a="reply" data-v="' + x.id + '" data-r="Opened Checkup">Open Checkup</button><button class="btn sm ghost" data-a="reply" data-v="' + x.id + '" data-r="Requested a banker">Have a banker call</button><button class="btn sm ghost" data-a="reply" data-v="' + x.id + '" data-r="Not interested">Not now</button></div>') : '') +
         (!x.read && x.kind !== 'outreach' ? '<button class="linkish" data-a="read" data-v="' + x.id + '">Mark as read</button>' : '') + '</div>').join('') : '<p class="small muted" style="margin:0">No messages yet. Outreach a banker sends from the desktop console shows up here.</p>') + '</div>' +
@@ -520,7 +521,7 @@
     signon: f => {
       const id = f.uid.value.trim().toLowerCase(); if (!id) { toast('Enter a User ID or pick a profile'); return; }
       const p = db.profiles.find(x => x.userId.toLowerCase() === id || x.id === id || x.name.toLowerCase() === id);
-      if (p) signIn(p.id); else { ui.enroll = true; render(); const u = $('f-userId'); if (u) u.value = id; toast('No profile for "' + id + '". Enroll it.'); }
+      if (p) signIn(p.id); else { ui.enroll = true; render(); const u = $('f-userId'); if (u) u.value = id; toast('No profile for "' + id + '". Create a login for it.'); }
     },
     enroll: f => {
       const fd = new FormData(f), name = String(fd.get('name')).trim(), userId = String(fd.get('userId')).trim();
